@@ -1,0 +1,6 @@
+json
+matplotlib
+numpy
+xarray
+beautifulsoup4
+tqdm
