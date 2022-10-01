@@ -18,11 +18,11 @@ matplotlib.use("Agg")
 COLORMAP = "Blues"
 
 
-class AvailableLocations(Enum):
+class Locations(Enum):
     Munich = "2867714"
 
 
-class AvailableVariables(Enum):
+class Variables(Enum):
     precipitation = "niederschlag"
     accumulated_precipitation = "niederschlagssumme"
     temperature = "temperatur"
@@ -31,7 +31,7 @@ class AvailableVariables(Enum):
     pressure = "luftdruck"
 
 
-def download_page(location: AvailableLocations, variable: AvailableVariables) -> requests.Response:
+def download_page(location: Locations, variable: Variables) -> requests.Response:
     URL = "https://meteologix.com/uk/ajax/ensemble"
     REFERER = "https://meteologix.com/uk/forecast/2867714-munich/ensemble/rapid-id2/precipitation"
 
@@ -123,7 +123,7 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
     return dataArray
 
 
-def get_data(location: AvailableLocations, variable: AvailableVariables) -> xarray.DataArray:
+def get_data(location: Locations, variable: Variables) -> xarray.DataArray:
     # Download webpage
     page = download_page(location, variable)
     # Parse the webpage and obtain a dictionary
@@ -135,7 +135,7 @@ def get_data(location: AvailableLocations, variable: AvailableVariables) -> xarr
     return dataArray
 
 
-def convert_to_probabilities(data_array: xarray.DataArray, variable: AvailableVariables) -> xarray.DataArray:
+def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) -> xarray.DataArray:
     """
     Given a data array containing a dimension member and a dimension time, create a new dataset in which
     the new dimensions are the time and the variable value, and the actual values are the
@@ -174,8 +174,8 @@ def main():
     if not plots_folder.exists():
         plots_folder.mkdir()
 
-    location = AvailableLocations.Munich
-    for variable in tqdm(AvailableVariables):
+    location = Locations.Munich
+    for variable in tqdm(Variables):
         # Get the data
         data = get_data(location, variable)
         # Convert the data

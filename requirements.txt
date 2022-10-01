@@ -4,3 +4,4 @@ xarray
 hvplot
 beautifulsoup4
 tqdm
+streamlit
