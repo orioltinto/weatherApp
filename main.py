@@ -1,8 +1,8 @@
+import hashlib
 import json
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 import matplotlib
 import numpy as np
@@ -13,29 +13,31 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 # Change matplotlib backend
+from sources.cache import Cache
+from sources.locations import Locations
+from sources.variables import Variables
+
 matplotlib.use("Agg")
 
 COLORMAP = "Blues"
 
 today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
 
+cache_file_path = Path("cache.pkl")
+
+if cache_file_path.exists():
+    cache = Cache.from_file(cache_file_path)
+else:
+    cache = Cache()
+
+
+def md5_hash(string: str) -> str:
+    return hashlib.md5(string.encode()).hexdigest()
+
 
 def timedelta_as_hours(time: datetime) -> int:
     td = time - today
     return int(td.days * 24 + td.seconds / 3600)
-
-
-class Locations(Enum):
-    Munich = "2867714"
-
-
-class Variables(Enum):
-    precipitation = "niederschlag"
-    accumulated_precipitation = "niederschlagssumme"
-    temperature = "temperatur"
-    humidity = "relfeuchte"
-    dew_point = "taupunkt"
-    pressure = "luftdruck"
 
 
 def download_page(location: Locations, variable: Variables) -> requests.Response:
@@ -132,16 +134,24 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
     return dataArray
 
 
-def get_data(location: Locations, variable: Variables) -> xarray.DataArray:
+def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.DataArray]:
     # Download webpage
     page = download_page(location, variable)
-    # Parse the webpage and obtain a dictionary
-    parsed_data = parse_page(page)
 
-    # Extract the relevant information as a data array
-    dataArray = extract_variable_information(parsed_data)
+    page_hash = md5_hash(page.text)
+    if page_hash not in cache.raw_data:
+        # Parse the webpage and obtain a dictionary
+        parsed_data = parse_page(page)
 
-    return dataArray
+        # Extract the relevant information as a data array
+        dataArray = extract_variable_information(parsed_data)
+        cache.raw_data[page_hash] = dataArray
+        is_new = True
+    else:
+        dataArray = cache.raw_data[page_hash]
+        is_new = False
+
+    return is_new, dataArray
 
 
 def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) -> xarray.DataArray:
@@ -165,7 +175,6 @@ def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) 
         for s_idx, s in enumerate(steps):
             prob_array[t_idx, s_idx] = (data_array.sel(time=t) > s).sum() / number_of_members * 100.
 
-    # prob_dataArray = xarray.DataArray(prob_array, coords={"time": times.astype(float), variable.name: steps})
     prob_dataArray = xarray.DataArray(prob_array, coords={"time": times, variable.name: steps})
     return prob_dataArray
 
@@ -176,16 +185,19 @@ def tick_to_label(hours_since_start: int) -> str:
     return f"+{days}d {hours}h" if days else f"{hours}h"
 
 
-def plot_data(data_array: xarray.DataArray, file_name: Path = None):
+def plot_data(data_array: xarray.DataArray):
     data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
     ticks = range(min(data_array.time.values), max(data_array.time.values), 3)
     labels = [tick_to_label(t) for t in ticks]
     plt.xticks(ticks=ticks, labels=labels, rotation=45)
-    if file_name is not None:
-        plt.title("Probabilities")
-        plt.savefig(file_name)
-        plt.clf()
     return plt.gcf()
+
+
+def save_figure(figure: matplotlib.figure, filename: Union[Path, str]):
+    filename = Path(filename).resolve()
+    plt.figure(figure.number)
+    plt.savefig(filename)
+    plt.clf()
 
 
 def main():
@@ -195,12 +207,24 @@ def main():
         plots_folder.mkdir()
 
     location = Locations.Munich
+
     for variable in tqdm(Variables):
         # Get the data
-        data = get_data(location, variable)
+        is_new, data = get_data(location, variable)
+
         # Convert the data
-        prob_data = convert_to_probabilities(data, variable)
-        plot_data(prob_data, plots_folder / f"{variable.name}.png")
+        if is_new:
+            prob_data = convert_to_probabilities(data, variable)
+            cache.probabilities[(location, variable)] = prob_data
+        else:
+            prob_data = cache.probabilities[(location, variable)]
+        if is_new:
+            figure = plot_data(prob_data)
+            cache.figures[(location, variable)] = figure
+        else:
+            figure = cache.figures[(location, variable)]
+        save_figure(figure, plots_folder / f"{variable.name}.png")
+    cache.save_cache(cache_file_path)
 
 
 if __name__ == "__main__":
