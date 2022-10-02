@@ -1,9 +1,7 @@
-import hvplot as hv
 import hvplot.xarray  # noqa
 import streamlit as st
-import numpy as np
 
-from main import Locations, Variables, get_data, convert_to_probabilities, COLORMAP
+from main import Locations, Variables, get_data, convert_to_probabilities, COLORMAP, plot_data
 
 
 def run_case(location: Locations, variable: Variables):
@@ -11,9 +9,8 @@ def run_case(location: Locations, variable: Variables):
     data = get_data(location, variable)
     # Convert the data
     prob_data = convert_to_probabilities(data, variable)
-    plot = prob_data.T.hvplot.contourf(levels=np.linspace(0, 100, 21))
-    plot.opts(invert_axes=True)
-    st.bokeh_chart(hv.render(plot, backend='bokeh'))
+    plot = plot_data(prob_data, file_name=None)
+    st.pyplot(fig=plot, clear_figure=True, )
 
 
 def main():
