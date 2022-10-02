@@ -17,6 +17,13 @@ matplotlib.use("Agg")
 
 COLORMAP = "Blues"
 
+today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def timedelta_as_hours(time: datetime) -> int:
+    td = time - today
+    return int(td.days * 24 + td.seconds / 3600)
+
 
 class Locations(Enum):
     Munich = "2867714"
@@ -102,7 +109,9 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
         :param member_data:
         :return:
         """
-        time = [datetime.fromtimestamp(d[0] / 1000) for d in member_data]
+        # Fix times
+
+        time = [timedelta_as_hours(datetime.fromtimestamp(d[0] / 1000)) for d in member_data]
         values = [d[1] for d in member_data]
         return time, values
 
@@ -155,17 +164,28 @@ def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) 
     for t_idx, t in enumerate(times):
         for s_idx, s in enumerate(steps):
             prob_array[t_idx, s_idx] = (data_array.sel(time=t) > s).sum() / number_of_members * 100.
-    prob_dataArray = xarray.DataArray(prob_array, coords={"time": times.astype(float), variable.name: steps})
+
+    # prob_dataArray = xarray.DataArray(prob_array, coords={"time": times.astype(float), variable.name: steps})
+    prob_dataArray = xarray.DataArray(prob_array, coords={"time": times, variable.name: steps})
     return prob_dataArray
 
 
-def plot_data(data_array: xarray.DataArray, file_name: Path = None) -> None:
+def tick_to_label(hours_since_start: int) -> str:
+    days = hours_since_start // 24
+    hours = hours_since_start % 24
+    return f"+{days}d {hours}h" if days else f"{hours}h"
+
+
+def plot_data(data_array: xarray.DataArray, file_name: Path = None):
     plot = data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
+    ticks = range(min(data_array.time.values), max(data_array.time.values), 3)
+    labels = [tick_to_label(t) for t in ticks]
+    plt.xticks(ticks=ticks, labels=labels, rotation=45)
     if file_name is not None:
         plt.title("Probabilities")
         plt.savefig(file_name)
         plt.clf()
-    return plot
+    return plt.gcf()
 
 
 def main():
