@@ -11,9 +11,9 @@ class Cache:
     @staticmethod
     def from_file(file_path: Path):
         with file_path.open("rb") as f:
-            c = pickle.load(f)
-        assert isinstance(c, Cache)
-        return c
+            _cache = pickle.load(f)
+        assert isinstance(_cache, Cache)
+        return _cache
 
     def save_cache(self, file_path: Path):
         with file_path.open("wb") as f:
