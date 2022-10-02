@@ -18,6 +18,9 @@ def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) 
     number_of_steps = 100
     steps = np.linspace(min_value, max_value, number_of_steps)
     times = data_array["time"]
+    members = data_array.member
+    members = [idx for idx, m in enumerate(members) if m.values != "Main"]
+    data_array = data_array.isel(member=members)
     number_of_members = data_array["member"].size
     prob_array = np.zeros((len(times), len(steps)))
 
