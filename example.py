@@ -27,12 +27,11 @@ def main():
         else:
             prob_data = cache.probabilities[(location, variable)]
         if is_new:
-            figure = plot_data(prob_data)
+            figure = plot_data(data, prob_data)
             cache.figures[(location, variable)] = figure
         else:
             figure = cache.figures[(location, variable)]
         save_figure(figure, plots_folder / f"{variable.name}.png")
-    cache.save_cache(cache_file_path)
 
 
 if __name__ == "__main__":

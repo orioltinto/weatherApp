@@ -18,7 +18,7 @@ def run_case(location: Locations, variable: Variables):
     else:
         prob_data = cache.probabilities[(location, variable)]
     if is_new:
-        figure = plot_data(prob_data)
+        figure = plot_data(data, prob_data)
         cache.figures[(location, variable)] = figure
     else:
         figure = cache.figures[(location, variable)]
