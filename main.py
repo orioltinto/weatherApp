@@ -177,7 +177,7 @@ def tick_to_label(hours_since_start: int) -> str:
 
 
 def plot_data(data_array: xarray.DataArray, file_name: Path = None):
-    plot = data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
+    data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
     ticks = range(min(data_array.time.values), max(data_array.time.values), 3)
     labels = [tick_to_label(t) for t in ticks]
     plt.xticks(ticks=ticks, labels=labels, rotation=45)

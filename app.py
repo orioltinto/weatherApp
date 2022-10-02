@@ -1,7 +1,6 @@
-import hvplot.xarray  # noqa
 import streamlit as st
 
-from main import Locations, Variables, get_data, convert_to_probabilities, COLORMAP, plot_data
+from main import Locations, Variables, get_data, convert_to_probabilities, plot_data
 
 
 def run_case(location: Locations, variable: Variables):
@@ -9,8 +8,8 @@ def run_case(location: Locations, variable: Variables):
     data = get_data(location, variable)
     # Convert the data
     prob_data = convert_to_probabilities(data, variable)
-    plot = plot_data(prob_data, file_name=None)
-    st.pyplot(fig=plot, clear_figure=True, )
+    figure = plot_data(prob_data)
+    st.pyplot(fig=figure, clear_figure=True)
 
 
 def main():
