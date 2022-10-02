@@ -31,10 +31,8 @@ def main():
     st.sidebar.title("Select Variable and Place")
     loc = st.sidebar.selectbox("Locations", [_loc.name.capitalize() for _loc in Locations])
     var = st.sidebar.selectbox("Variable", [_var.name.capitalize() for _var in Variables])
-
-    with st.spinner(text="..."):
-        st.subheader(str(var).capitalize())
-        run_case(Locations[loc.lower()], Variables[var.lower()])
+    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}")
+    run_case(Locations[loc.lower()], Variables[var.lower()])
 
 
 if __name__ == "__main__":
