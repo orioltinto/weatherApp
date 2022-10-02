@@ -17,11 +17,19 @@ def tick_to_label(hours_since_start: int) -> str:
     return f"+{days}d {hours}h" if days else f"{hours}h"
 
 
-def plot_data(data_array: xarray.DataArray):
-    data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
-    ticks = range(min(data_array.time.values), max(data_array.time.values), 3)
+def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray):
+    # Plot mean
+    raw_data.mean(dim="member").plot(linestyle='dashed', color="red", label="Mean", alpha=.5)
+
+    # Plot main
+    raw_data.sel(member="Main").plot(linestyle='dashed', color="black", label="Deterministic", alpha=.5)
+
+    probability_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
+    ticks = range(min(probability_array.time.values), max(probability_array.time.values), 3)
     labels = [tick_to_label(t) for t in ticks]
     plt.xticks(ticks=ticks, labels=labels, rotation=45)
+    plt.tight_layout()
+    plt.legend()
     return plt.gcf()
 
 
