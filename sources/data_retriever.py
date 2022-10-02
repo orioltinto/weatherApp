@@ -26,6 +26,7 @@ def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.Dat
     # Download webpage
     page = download_page(location, variable)
 
+    # Compute hash
     page_hash = md5_hash(page.text)
     if page_hash not in cache.raw_data:
         # Parse the webpage and obtain a dictionary
@@ -44,7 +45,6 @@ def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.Dat
 
 def download_page(location: Locations, variable: Variables) -> requests.Response:
     URL = "https://meteologix.com/uk/ajax/ensemble"
-    REFERER = "https://meteologix.com/uk/forecast/2867714-munich/ensemble/rapid-id2/precipitation"
 
     REQUEST_PARAMS = {"city_id": location.value,
                       "model": "rapid-id2",
@@ -53,7 +53,6 @@ def download_page(location: Locations, variable: Variables) -> requests.Response
                       }
     HEADERS = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0',
-        "referer": REFERER,
 
     }
 
