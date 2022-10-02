@@ -2,4 +2,4 @@ from enum import Enum
 
 
 class Locations(Enum):
-    Munich = "2867714"
+    munich = "2867714"
