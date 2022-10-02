@@ -1,6 +1,10 @@
 import streamlit as st
 
-from main import Locations, Variables, get_data, convert_to_probabilities, plot_data, cache, cache_file_path
+from sources.data_plotting import plot_data
+from sources.data_process import convert_to_probabilities
+from sources.data_retriever import get_data, cache, cache_file_path
+from sources.locations import Locations
+from sources.variables import Variables
 
 
 def run_case(location: Locations, variable: Variables):
@@ -19,9 +23,7 @@ def run_case(location: Locations, variable: Variables):
     else:
         figure = cache.figures[(location, variable)]
 
-    print(f"{figure=}")
     st.pyplot(fig=figure)
-    print(cache.figures)
     # Save cache for future usage
     cache.save_cache(cache_file_path)
 

@@ -2,26 +2,16 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Tuple
 
-import matplotlib
 import numpy as np
 import requests
 import xarray
 from bs4 import BeautifulSoup
-from matplotlib import pyplot as plt
-from tqdm import tqdm
 
-# Change matplotlib backend
-from sources.cache import Cache
-from sources.locations import Locations
-from sources.variables import Variables
-
-matplotlib.use("Agg")
-
-COLORMAP = "Blues"
-
-today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+from .cache import Cache
+from .locations import Locations
+from .variables import Variables
 
 cache_file_path = Path("cache.pkl")
 
@@ -35,9 +25,24 @@ def md5_hash(string: str) -> str:
     return hashlib.md5(string.encode()).hexdigest()
 
 
-def timedelta_as_hours(time: datetime) -> int:
-    td = time - today
-    return int(td.days * 24 + td.seconds / 3600)
+def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.DataArray]:
+    # Download webpage
+    page = download_page(location, variable)
+
+    page_hash = md5_hash(page.text)
+    if page_hash not in cache.raw_data:
+        # Parse the webpage and obtain a dictionary
+        parsed_data = parse_page(page)
+
+        # Extract the relevant information as a data array
+        dataArray = extract_variable_information(parsed_data)
+        cache.raw_data[page_hash] = dataArray
+        is_new = True
+    else:
+        dataArray = cache.raw_data[page_hash]
+        is_new = False
+
+    return is_new, dataArray
 
 
 def download_page(location: Locations, variable: Variables) -> requests.Response:
@@ -134,98 +139,7 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
     return dataArray
 
 
-def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.DataArray]:
-    # Download webpage
-    page = download_page(location, variable)
-
-    page_hash = md5_hash(page.text)
-    if page_hash not in cache.raw_data:
-        # Parse the webpage and obtain a dictionary
-        parsed_data = parse_page(page)
-
-        # Extract the relevant information as a data array
-        dataArray = extract_variable_information(parsed_data)
-        cache.raw_data[page_hash] = dataArray
-        is_new = True
-    else:
-        dataArray = cache.raw_data[page_hash]
-        is_new = False
-
-    return is_new, dataArray
-
-
-def convert_to_probabilities(data_array: xarray.DataArray, variable: Variables) -> xarray.DataArray:
-    """
-    Given a data array containing a dimension member and a dimension time, create a new dataset in which
-    the new dimensions are the time and the variable value, and the actual values are the
-    probabilities of that happening.
-    :param data_array:
-    :param variable:
-    :return data_array:
-    """
-    min_value = data_array.min().values
-    max_value = data_array.max().values
-    number_of_steps = 100
-    steps = np.linspace(min_value, max_value, number_of_steps)
-    times = data_array["time"]
-    number_of_members = data_array["member"].size
-    prob_array = np.zeros((len(times), len(steps)))
-
-    for t_idx, t in enumerate(times):
-        for s_idx, s in enumerate(steps):
-            prob_array[t_idx, s_idx] = (data_array.sel(time=t) > s).sum() / number_of_members * 100.
-
-    prob_dataArray = xarray.DataArray(prob_array, coords={"time": times, variable.name: steps})
-    return prob_dataArray
-
-
-def tick_to_label(hours_since_start: int) -> str:
-    days = hours_since_start // 24
-    hours = hours_since_start % 24
-    return f"+{days}d {hours}h" if days else f"{hours}h"
-
-
-def plot_data(data_array: xarray.DataArray):
-    data_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
-    ticks = range(min(data_array.time.values), max(data_array.time.values), 3)
-    labels = [tick_to_label(t) for t in ticks]
-    plt.xticks(ticks=ticks, labels=labels, rotation=45)
-    return plt.gcf()
-
-
-def save_figure(figure: matplotlib.figure, filename: Union[Path, str]):
-    filename = Path(filename).resolve()
-    plt.figure(figure.number)
-    plt.savefig(filename)
-    plt.clf()
-
-
-def main():
-    from pathlib import Path
-    plots_folder = Path("plots")
-    if not plots_folder.exists():
-        plots_folder.mkdir()
-
-    location = Locations.Munich
-
-    for variable in tqdm(Variables):
-        # Get the data
-        is_new, data = get_data(location, variable)
-
-        # Convert the data
-        if is_new:
-            prob_data = convert_to_probabilities(data, variable)
-            cache.probabilities[(location, variable)] = prob_data
-        else:
-            prob_data = cache.probabilities[(location, variable)]
-        if is_new:
-            figure = plot_data(prob_data)
-            cache.figures[(location, variable)] = figure
-        else:
-            figure = cache.figures[(location, variable)]
-        save_figure(figure, plots_folder / f"{variable.name}.png")
-    cache.save_cache(cache_file_path)
-
-
-if __name__ == "__main__":
-    main()
+def timedelta_as_hours(time: datetime) -> int:
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    td = time - today
+    return int(td.days * 24 + td.seconds / 3600)
