@@ -14,7 +14,7 @@ def main():
     if not plots_folder.exists():
         plots_folder.mkdir()
 
-    location = Locations.Munich
+    location = Locations.munich
 
     for variable in tqdm(Variables):
         # Get the data
