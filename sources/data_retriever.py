@@ -15,10 +15,7 @@ from .variables import Variables
 
 cache_file_path = Path("cache.pkl")
 
-if cache_file_path.exists():
-    cache = Cache.from_file(cache_file_path)
-else:
-    cache = Cache()
+cache = Cache()
 
 
 def md5_hash(string: str) -> str:

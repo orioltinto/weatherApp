@@ -24,8 +24,6 @@ def run_case(location: Locations, variable: Variables):
         figure = cache.figures[(location, variable)]
 
     st.pyplot(fig=figure)
-    # Save cache for future usage
-    cache.save_cache(cache_file_path)
 
 
 def main():
