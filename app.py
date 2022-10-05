@@ -36,7 +36,7 @@ def main():
     loc = st.sidebar.selectbox("Locations", [_loc.name.capitalize() for _loc in Locations])
     var = st.sidebar.selectbox("Variable", [_var.name.capitalize() for _var in Variables])
     model = st.sidebar.selectbox("Model", [_mod.name.capitalize() for _mod in Models])
-    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}")
+    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}. Model: {str(model).capitalize()}")
     try:
         run_case(Locations[loc.lower()], Variables[var.lower()], Models[model.lower()])
     except AssertionError as err:
