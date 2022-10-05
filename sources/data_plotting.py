@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -25,9 +26,13 @@ def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray):
     raw_data.sel(member="Main").plot(linestyle='dashed', color="black", label="Deterministic", alpha=.5)
 
     probability_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
-    ticks = range(min(probability_array.time.values), max(probability_array.time.values), 3)
-    labels = [tick_to_label(t) for t in ticks]
-    plt.xticks(ticks=ticks, labels=labels, rotation=45)
+
+    # Plot current time
+    now = datetime.now()
+    y_range = plt.gca().get_ylim()
+    plt.plot([now, now], y_range, ":", color="gray", label="Current time")
+
+    # Format and add legend
     plt.tight_layout()
     plt.legend()
     return plt.gcf()
