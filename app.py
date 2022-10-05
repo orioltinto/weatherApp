@@ -27,6 +27,9 @@ def run_case(location: Locations, variable: Variables):
 
 
 def main():
+    st.set_page_config(
+        page_title="Weather Probability App!",
+    )
     st.title("Weather Probability App!")
     st.sidebar.title("Select Variable and Place")
     loc = st.sidebar.selectbox("Locations", [_loc.name.capitalize() for _loc in Locations])
