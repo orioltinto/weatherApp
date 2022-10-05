@@ -112,9 +112,7 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
         :param member_data:
         :return:
         """
-        # Fix times
-
-        time = [timedelta_as_hours(datetime.fromtimestamp(d[0] / 1000)) for d in member_data]
+        time = [datetime.fromtimestamp(d[0] / 1000) for d in member_data]
         values = [d[1] for d in member_data]
         return time, values
 
