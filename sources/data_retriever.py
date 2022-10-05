@@ -27,7 +27,7 @@ def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.Dat
     page = download_page(location, variable)
 
     # Compute hash
-    page_hash = md5_hash(page.text)
+    page_hash = md5_hash(page.text+str(location)+str(variable))
     if page_hash not in cache.raw_data:
         # Parse the webpage and obtain a dictionary
         parsed_data = parse_page(page)
