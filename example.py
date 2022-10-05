@@ -3,7 +3,7 @@ from tqdm import tqdm
 # Change matplotlib backend
 from sources.data_plotting import plot_data, save_figure
 from sources.data_process import convert_to_probabilities
-from sources.data_retriever import get_data, cache, cache_file_path
+from sources.data_retriever import get_data, cache
 from sources.locations import Locations
 from sources.variables import Variables
 
