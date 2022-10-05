@@ -22,8 +22,9 @@ def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray):
     # Plot mean
     raw_data.mean(dim="member").plot(linestyle='dashed', color="red", label="Mean", alpha=.5)
 
-    # Plot main
-    raw_data.sel(member="Main").plot(linestyle='dashed', color="black", label="Deterministic", alpha=.5)
+    # If the main member is available, plot it
+    if "Main" in raw_data.member:
+        raw_data.sel(member="Main").plot(linestyle='dashed', color="black", label="Deterministic", alpha=.5)
 
     probability_array.T.plot.contourf(levels=np.linspace(0, 100, 11), cmap=COLORMAP)
 
