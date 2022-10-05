@@ -33,14 +33,17 @@ def main():
     )
     st.title("Weather Probability App!")
     st.sidebar.title("Select Variable and Place")
-    loc = st.sidebar.selectbox("Locations", [_loc.name.capitalize() for _loc in Locations])
+    loc = st.sidebar.selectbox("Location", [_loc.name.capitalize() for _loc in Locations])
     var = st.sidebar.selectbox("Variable", [_var.name.capitalize() for _var in Variables])
+    st.sidebar.markdown("---")
     model = st.sidebar.selectbox("Model", [_mod.name.capitalize() for _mod in Models])
-    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}. Model: {str(model).capitalize()}")
+    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}")
+
     try:
         run_case(Locations[loc.lower()], Variables[var.lower()], Models[model.lower()])
     except AssertionError as err:
         st.warning(err)
+    st.markdown(f"Model: {str(model).capitalize()}")
 
 
 if __name__ == "__main__":
