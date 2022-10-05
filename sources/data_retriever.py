@@ -10,7 +10,6 @@ import xarray
 from bs4 import BeautifulSoup
 
 from .cache import Cache
-from .locations import Locations
 from .models import Models
 from .variables import Variables
 
@@ -23,7 +22,7 @@ def md5_hash(string: str) -> str:
     return hashlib.md5(string.encode()).hexdigest()
 
 
-def get_data(location: Locations, variable: Variables, model: Models) -> Tuple[bool, xarray.DataArray]:
+def get_data(location: int, variable: Variables, model: Models) -> Tuple[bool, xarray.DataArray]:
     # Download webpage
     page = download_page(location, variable, model)
 
@@ -44,10 +43,10 @@ def get_data(location: Locations, variable: Variables, model: Models) -> Tuple[b
     return is_new, dataArray
 
 
-def download_page(location: Locations, variable: Variables, model: Models) -> requests.Response:
+def download_page(location: int, variable: Variables, model: Models) -> requests.Response:
     URL = "https://meteologix.com/uk/ajax/ensemble"
 
-    REQUEST_PARAMS = {"city_id": location.value,
+    REQUEST_PARAMS = {"city_id": str(location),
                       "model": model.value,
                       "model_view": "",
                       "param": variable.value,

@@ -3,12 +3,12 @@ import streamlit as st
 from sources.data_plotting import plot_data
 from sources.data_process import convert_to_probabilities
 from sources.data_retriever import get_data, cache
-from sources.locations import Locations
+from sources.location_retriever import location_widget
 from sources.models import Models
 from sources.variables import Variables
 
 
-def run_case(location: Locations, variable: Variables, model: Models):
+def run_case(location: int, variable: Variables, model: Models):
     # Get the data
     is_new, data = get_data(location, variable, model)
 
@@ -32,17 +32,23 @@ def main():
         page_title="Weather Probability App!",
     )
     st.title("Weather Probability App!")
-    st.sidebar.title("Select Variable and Place")
-    loc = st.sidebar.selectbox("Location", [_loc.name.capitalize() for _loc in Locations])
+    st.sidebar.title("Select Location:")
+    loc_name, loc_id = location_widget()
+    st.sidebar.markdown("---")
+    st.sidebar.title("Select Variable:")
     var = st.sidebar.selectbox("Variable", [_var.name.capitalize() for _var in Variables])
     st.sidebar.markdown("---")
+    st.sidebar.title("Select Model:")
     model = st.sidebar.selectbox("Model", [_mod.name.capitalize() for _mod in Models])
-    st.subheader(f"{str(var).capitalize()} at {str(loc).capitalize()}")
+    st.sidebar.markdown("---")
 
-    try:
-        run_case(Locations[loc.lower()], Variables[var.lower()], Models[model.lower()])
-    except AssertionError as err:
-        st.warning(err)
+    st.subheader(f"{str(var).capitalize()} at {str(loc_name)}")
+
+    with st.spinner():
+        try:
+            run_case(loc_id, Variables[var.lower()], Models[model.lower()])
+        except AssertionError as err:
+            st.warning(err)
     st.markdown(f"Model: {str(model).capitalize()}")
 
 
