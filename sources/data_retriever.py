@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 from .cache import Cache
 from .locations import Locations
+from .models import Models
 from .variables import Variables
 
 cache_file_path = Path("cache.pkl")
@@ -22,12 +23,12 @@ def md5_hash(string: str) -> str:
     return hashlib.md5(string.encode()).hexdigest()
 
 
-def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.DataArray]:
+def get_data(location: Locations, variable: Variables, model: Models) -> Tuple[bool, xarray.DataArray]:
     # Download webpage
-    page = download_page(location, variable)
+    page = download_page(location, variable, model)
 
     # Compute hash
-    page_hash = md5_hash(page.text+str(location)+str(variable))
+    page_hash = md5_hash(page.text+str(location)+str(variable)+str(model))
     if page_hash not in cache.raw_data:
         # Parse the webpage and obtain a dictionary
         parsed_data = parse_page(page)
@@ -43,11 +44,11 @@ def get_data(location: Locations, variable: Variables) -> Tuple[bool, xarray.Dat
     return is_new, dataArray
 
 
-def download_page(location: Locations, variable: Variables) -> requests.Response:
+def download_page(location: Locations, variable: Variables, model: Models) -> requests.Response:
     URL = "https://meteologix.com/uk/ajax/ensemble"
 
     REQUEST_PARAMS = {"city_id": location.value,
-                      "model": "rapid-id2",
+                      "model": model.value,
                       "model_view": "",
                       "param": variable.value,
                       }
@@ -63,7 +64,10 @@ def parse_page(page: requests.Response) -> dict:
     # Parse with BeautifulSoup
     soup = BeautifulSoup(page.content, 'html.parser')
     # Get script part
-    script = soup.find(type="text/javascript").extract().string
+    try:
+        script = soup.find(type="text/javascript").extract().string
+    except AttributeError:
+        raise AssertionError("Couldn't retrieve data")
 
     # Look for the variable that contains the data
     search_for = "var hcensemblelong_data = "
@@ -117,15 +121,16 @@ def extract_variable_information(parsed_data: dict) -> xarray.DataArray:
         return time, values
 
     # Get the data shape to create an empty array
-    times, var = get_time_and_variable(data_dictionary[members[0]])
+    times, var = get_time_and_variable(data_dictionary[members[-1]])
 
     data_shape = (len(members), len(times))
-    data = np.zeros(data_shape)
+    data = np.empty(data_shape)
+    data[:] = np.nan
 
     # Process all members to fill the array.
     for m_idx, member in enumerate(members):
         times, var = get_time_and_variable(data_dictionary[member])
-        data[m_idx, :] = var
+        data[m_idx, :len(var)] = var
 
     # Convert numpy array to data array with the corresponding dimensions
     dataArray = xarray.DataArray(data, coords={"member": members, "time": times})
