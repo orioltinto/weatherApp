@@ -4,3 +4,4 @@ xarray
 beautifulsoup4
 tqdm
 streamlit
+joblib

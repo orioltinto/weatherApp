@@ -31,6 +31,15 @@ def main():
     st.set_page_config(
         page_title="Weather Probability App!",
     )
+
+    st.markdown('''
+    <style>
+    .stApp [data-testid="stToolbar"]{
+        display:none;
+    }
+    </style>
+    ''', unsafe_allow_html=True)
+
     st.title("Weather Probability App!")
     st.sidebar.title("Select Location:")
     loc_name, loc_id = location_widget()
@@ -49,7 +58,7 @@ def main():
             run_case(loc_id, Variables[var.lower()], Models[model.lower()])
         except AssertionError as err:
             st.warning(err)
-    st.markdown(f"Model: {str(model).capitalize()}")
+    st.markdown(f"**Model**: {str(model).capitalize()}")
 
 
 if __name__ == "__main__":
