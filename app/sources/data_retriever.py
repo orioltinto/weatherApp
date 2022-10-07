@@ -2,7 +2,7 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import requests
@@ -15,19 +15,43 @@ from .variables import Variables
 
 cache_file_path = Path("cache.pkl")
 
-cache = Cache()
+cache = Cache(cache_file_path)
 
 
 def md5_hash(string: str) -> str:
     return hashlib.md5(string.encode()).hexdigest()
 
 
-def get_data(location: int, variable: Variables, model: Models) -> Tuple[bool, xarray.DataArray]:
+def get_data(location: int, variable: Variables, models: List[Models]) -> Tuple[bool, xarray.DataArray]:
+    if len(models) > 1:
+        return get_multi_model_data(location, variable, models)
+
+    else:
+        return get_model_data(location, variable, model=models[0])
+
+
+def get_multi_model_data(location: int, variable: Variables, models: List[Models]) -> tuple[bool, xarray.DataArray]:
+    all_data = [get_model_data(location, variable, model) for model in models]
+
+    # data_arrays = [da.rename(key.name) for key, da in all_data.items()]
+    data_arrays = [da for _, da in all_data]
+    is_new = any([is_new for is_new, _ in all_data])
+
+    concat: xarray.DataArray
+    concat = xarray.concat(data_arrays, dim="member")
+
+    # Rename members
+    concat["member"] = range(concat["member"].size)
+    concat = concat.interpolate_na(dim="time")
+    return is_new, concat
+
+
+def get_model_data(location: int, variable: Variables, model: Models) -> Tuple[bool, xarray.DataArray]:
     # Download webpage
     page = download_page(location, variable, model)
 
     # Compute hash
-    page_hash = md5_hash(page.text+str(location)+str(variable)+str(model))
+    page_hash = md5_hash(page.text + str(location) + str(variable) + str(model))
     if page_hash not in cache.raw_data:
         # Parse the webpage and obtain a dictionary
         parsed_data = parse_page(page)
