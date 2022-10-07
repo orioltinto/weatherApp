@@ -18,7 +18,12 @@ def tick_to_label(hours_since_start: int) -> str:
     return f"+{days}d {hours}h" if days else f"{hours}h"
 
 
-def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray):
+def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray, time_tuple: tuple = None):
+
+    if time_tuple is not None:
+        time_slice = slice(*time_tuple)
+        raw_data = raw_data.sel(time=time_slice)
+        probability_array = probability_array.sel(time=time_slice)
     # Plot mean
     raw_data.mean(dim="member").plot(linestyle='dashed', color="red", label="Mean", alpha=.5)
 
@@ -30,8 +35,10 @@ def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray):
 
     # Plot current time
     now = datetime.now()
-    y_range = plt.gca().get_ylim()
-    plt.plot([now, now], y_range, ":", color="gray", label="Current time")
+
+    if time_tuple is None or now > time_tuple[0]:
+        y_range = plt.gca().get_ylim()
+        plt.plot([now, now], y_range, ":", color="gray", label="Current time")
 
     # Format and add legend
     plt.tight_layout()
