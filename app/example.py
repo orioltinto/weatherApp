@@ -26,7 +26,7 @@ def main():
 
 def run_case(location_id: int, variable: Variables, model: Models):
     try:
-        is_new, data = get_data(location_id, variable, model)
+        is_new, data = get_data(location_id, variable, [model])
     except AssertionError:
         return
 
