@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+from typing import List
+
 import streamlit as st
 
 from sources.data_plotting import plot_data
@@ -8,21 +11,34 @@ from sources.models import Models
 from sources.variables import Variables
 
 
-def run_case(location: int, variable: Variables, model: Models):
+def run_case(location: int, variable: Variables, models: List[Models]):
     # Get the data
-    is_new, data = get_data(location, variable, model)
+    is_new, data = get_data(location, variable, models)
 
     # Convert the data
-    if is_new:
+    if is_new or (location, variable, tuple(models)) not in cache.probabilities:
         prob_data = convert_to_probabilities(data, variable)
-        cache.probabilities[(location, variable, model)] = prob_data
+        cache.probabilities[(location, variable, tuple(models))] = prob_data
     else:
-        prob_data = cache.probabilities[(location, variable, model)]
-    if is_new:
-        figure = plot_data(data, prob_data)
-        cache.figures[(location, variable, model)] = figure
+        prob_data = cache.probabilities[(location, variable, tuple(models))]
+
+    times = prob_data.time.values.astype(datetime)
+    times = [datetime.fromtimestamp(int(t / 1000000000)) for t in times]
+
+    time_slice = st.sidebar.slider(
+        "Adjust Time",
+        min_value=min(times),
+        max_value=max(times),
+        value=(min(times), max(times)),
+        format="MM/DD hh",
+        step=timedelta(hours=1)
+    )
+
+    if is_new or (location, variable, tuple(models), time_slice) not in cache.figures:
+        figure = plot_data(data, prob_data, time_slice)
+        cache.figures[(location, variable, tuple(models), time_slice)] = figure
     else:
-        figure = cache.figures[(location, variable, model)]
+        figure = cache.figures[(location, variable, tuple(models), time_slice)]
 
     st.pyplot(fig=figure)
 
@@ -32,13 +48,15 @@ def main():
         page_title="Weather Probability App!",
     )
 
-    st.markdown('''
-    <style>
-    .stApp [data-testid="stToolbar"]{
-        display:none;
-    }
-    </style>
-    ''', unsafe_allow_html=True)
+    hide_menu = False
+    if hide_menu:
+        st.markdown('''
+        <style>
+        .stApp [data-testid="stToolbar"]{
+            display:none;
+        }
+        </style>
+        ''', unsafe_allow_html=True)
 
     st.title("Weather Probability App!")
     st.sidebar.title("Select Location:")
@@ -48,17 +66,24 @@ def main():
     var = st.sidebar.selectbox("Variable", [_var.name.capitalize() for _var in Variables])
     st.sidebar.markdown("---")
     st.sidebar.title("Select Model:")
-    model = st.sidebar.selectbox("Model", [_mod.name.capitalize() for _mod in Models])
-    st.sidebar.markdown("---")
 
-    st.subheader(f"{str(var).capitalize()} at {str(loc_name)}")
+    initial_selection = [_mod.name.capitalize() for _mod in [Models.icon_d2, Models.ecmwf]]
+    models_selector = st.sidebar.multiselect("Models", [_mod.name.capitalize() for _mod in Models],
+                                             default=initial_selection)
+    if models_selector:
+        models = [Models[model.lower()] for model in models_selector]
+        st.sidebar.markdown("---")
+        st.subheader(f"{str(var).capitalize()} at {str(loc_name)}")
 
-    with st.spinner():
-        try:
-            run_case(loc_id, Variables[var.lower()], Models[model.lower()])
-        except AssertionError as err:
-            st.warning(err)
-    st.markdown(f"**Model**: {str(model).capitalize()}")
+        with st.spinner():
+            try:
+                run_case(loc_id, Variables[var.lower()], models)
+            except AssertionError as err:
+                st.warning(err)
+        if len(models) == 1:
+            st.markdown(f"**Model**: {str(models[0]).capitalize()}")
+        else:
+            st.markdown(f"**Models**: {'+'.join([str(model.name).capitalize() for model in models])}")
 
 
 if __name__ == "__main__":
