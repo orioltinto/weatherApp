@@ -18,14 +18,19 @@ def tick_to_label(hours_since_start: int) -> str:
     return f"+{days}d {hours}h" if days else f"{hours}h"
 
 
-def plot_data(raw_data: xarray.DataArray, probability_array: xarray.DataArray, time_tuple: tuple = None):
-
+def plot_data(raw_data: xarray.DataArray,
+              probability_array: xarray.DataArray,
+              time_tuple: tuple = None,
+              plot_mean: bool = True,
+              ):
     if time_tuple is not None:
         time_slice = slice(*time_tuple)
         raw_data = raw_data.sel(time=time_slice)
         probability_array = probability_array.sel(time=time_slice)
-    # Plot mean
-    raw_data.mean(dim="member").plot(linestyle='dashed', color="red", label="Mean", alpha=.5)
+
+    if plot_mean:
+        # Plot mean
+        raw_data.mean(dim="member").plot(linestyle='dashed', color="red", label="Mean", alpha=.5)
 
     # If the main member is available, plot it
     if "Main" in raw_data.member:
