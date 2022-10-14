@@ -25,6 +25,7 @@ def run_case(location: int, variable: Variables, models: List[Models]):
     times = prob_data.time.values.astype(datetime)
     times = [datetime.fromtimestamp(int(t / 1000000000)) for t in times]
 
+    plot_mean = st.sidebar.checkbox("Plot Mean", value=True)
     time_slice = st.sidebar.slider(
         "Adjust Time",
         min_value=min(times),
@@ -34,11 +35,11 @@ def run_case(location: int, variable: Variables, models: List[Models]):
         step=timedelta(hours=1)
     )
 
-    if is_new or (location, variable, tuple(models), time_slice) not in cache.figures:
-        figure = plot_data(data, prob_data, time_slice)
-        cache.figures[(location, variable, tuple(models), time_slice)] = figure
+    if is_new or (location, variable, tuple(models), time_slice, plot_mean) not in cache.figures:
+        figure = plot_data(data, prob_data, time_slice, plot_mean)
+        cache.figures[(location, variable, tuple(models), time_slice, plot_mean)] = figure
     else:
-        figure = cache.figures[(location, variable, tuple(models), time_slice)]
+        figure = cache.figures[(location, variable, tuple(models), time_slice, plot_mean)]
 
     st.pyplot(fig=figure)
 
