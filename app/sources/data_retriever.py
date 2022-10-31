@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 from datetime import datetime
@@ -68,7 +69,8 @@ def get_model_data(location: int, variable: Variables, model: Models) -> Tuple[b
 
 
 def download_page(location: int, variable: Variables, model: Models) -> requests.Response:
-    URL = "https://meteologix.com/uk/ajax/ensemble"
+    encoded_url = b'aHR0cHM6Ly9tZXRlb2xvZ2l4LmNvbS91ay9hamF4L2Vuc2VtYmxl'
+    URL = base64.b64decode(encoded_url).decode()
 
     REQUEST_PARAMS = {"city_id": str(location),
                       "model": model.value,
