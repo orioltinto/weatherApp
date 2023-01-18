@@ -11,7 +11,10 @@ HEADERS = {
 
 
 def retrieve_options(name: str = "") -> dict:
-    url = f"https://search.meteologix.com/xx/autocomplete/uk/de?q={name}"
+    encoded_url = r"aHR0cHM6Ly9zZWFyY2gubWV0ZW9sb2dpeC5jb20veHgvYXV0b2NvbXBsZXRlL3VrL2RlP3E9"
+    decoded_url = base64.b64decode(encoded_url).decode()
+    url = f"{decoded_url}{name}"
+
     r = requests.get(url, headers=HEADERS)
     response = json.loads(r.text)
     if not isinstance(response, list):
