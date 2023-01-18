@@ -78,7 +78,7 @@ def download_page(location: int, variable: Variables, model: Models) -> requests
                       "param": variable.value,
                       }
     HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0',
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0',
 
     }
 

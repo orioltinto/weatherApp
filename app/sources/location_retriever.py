@@ -1,13 +1,11 @@
 import base64
 import json
-from pprint import pformat
 
 import requests
 import streamlit as st
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0',
-
+    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0',
 }
 
 
@@ -33,6 +31,4 @@ def location_widget():
             if option:
                 location_name = results[option]["label"]
                 location_id = results[option]["id"]
-                # with st.expander("Details"):
-                #     st.sidebar.text(pformat(results[option], indent=4))
                 return location_name, location_id
